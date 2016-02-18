@@ -13,7 +13,7 @@ class Home extends CI_Controller
 		$this->layout->add_css(base_url('assets/css/styles.css'), array('media'=>'all'));
 		$this->layout->add_js('http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js');
 		
-		$this->layout->title(page_title('Home'));
+		$this->layout->title('Home');
 		$this->layout->view('home', $data);
 	}
 }
