@@ -13,5 +13,11 @@ var demo = function(){
 </script>
 <?php $this->layout->block(); ?>
 
+<?php $this->layout->block('dynamic_js_block', true); ?>
+var demo2 = function(){
+	// democode
+}
+<?php $this->layout->block(); ?>
+
 <h1>Hello <?php echo $name; ?></h1>
 <p>This is page content.</p>

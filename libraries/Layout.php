@@ -1,23 +1,35 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * CodeIgniter Layout library -by Sujeet <sujeetkv90@gmail.com>
- * v 1.0
+ * v 1.1
  */
 
 class Layout
 {
-	private $CI;
-	private $layout_title = '';
-	private $layout_view = '_layouts/default';
-	private $css_list = array(), $js_list = array();
-	private $css_attr = array('rel'=>'stylesheet','type'=>'text/css');
-	private $js_attr = array('type'=>'text/javascript');
-	private $block_list = array(), $block_name, $block_replace = false;
+	protected $CI;
+	
+	protected $layout_title = '';
+	
+	protected $element_dir = 'elements/';
+	protected $layout_element_dir = '';
+	
+	protected $layout_dir = '_layouts/';
+	protected $layout_view = 'default';
+	
+	protected $css_list = array(), $js_list = array();
+	protected $css_attr = array('rel'=>'stylesheet','type'=>'text/css');
+	protected $js_attr = array('type'=>'text/javascript');
+	
+	protected $block_list = array(), $block_name, $block_append = false, $block_replace = false;
 	
 	public function __construct(){
 		$this->CI =& get_instance();
+		
 		// Grab layout from called controller
+		if(isset($this->CI->layout_dir)) $this->layout_dir = $this->CI->layout_dir;
 		if(isset($this->CI->layout_view)) $this->layout_view = $this->CI->layout_view;
+		
+		$this->_set_element_dir();
 		
 		log_message('debug', "Layout Class Initialized");
 	}
@@ -27,8 +39,10 @@ class Layout
 	 * @param	string $title
 	 * @param	array $data
 	 * @param	bool $return
+	 * @param	string $layout_view
+	 * @param	string $layout_dir
 	 */
-	public function view($view, $data = NULL, $return = false, $layout_view = NULL){
+	public function view($view, $data = NULL, $return = false, $layout_view = NULL, $layout_dir = NULL){
 		// Render resources
 		$_data['title_for_layout'] = $this->layout_title;
 		
@@ -41,12 +55,29 @@ class Layout
 			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>', $v['attributes'], $v['resource']);
 		
 		// Render template
+		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
+		
+		$this->_set_element_dir($layout_dir); // dynamic element dir
+		
 		$_data['content_for_layout'] = $this->CI->load->view($view, $data, true);
 		$this->block_replace = true;
-		$_layout_view = ($layout_view) ? $layout_view : $this->layout_view;
+		
+		$_layout_view = $layout_dir . ($layout_view ? $layout_view : $this->layout_view);
 		$output = $this->CI->load->view($_layout_view, $_data, $return);
 		
+		$this->_set_element_dir(); // reset element dir
+		
 		return $output;
+	}
+	
+	/**
+	 * Load or Get layout element view
+	 * @param	string $name
+	 */
+	public function element($name, $return = false, $layout_dir = NULL){
+		$element_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' . $this->element_dir : $this->layout_element_dir;
+		$element = $this->CI->load->view($element_dir . $name, array(), $return);
+		return $element;
 	}
 	
 	/**
@@ -86,11 +117,29 @@ class Layout
 	}
 	
 	/**
+	 * Set layout directory
+	 * @param	string $layout_dir
+	 */
+	public function set_layout_dir($layout_dir){
+		if(!empty($layout_dir)) $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
+		$this->_set_element_dir(); // reset element dir
+	}
+	
+	/**
+	 * Get layout directory
+	 */
+	public function get_layout_dir(){
+		return $this->layout_dir;
+	}
+	
+	/**
 	 * Set layout view
 	 * @param	string $layout_view
+	 * @param	string $layout_dir
 	 */
-	public function set_layout($layout_view){
+	public function set_layout($layout_view, $layout_dir = NULL){
 		if(!empty($layout_view)) $this->layout_view = $layout_view;
+		if(!empty($layout_dir)) $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
 	}
 	
 	/**
@@ -103,10 +152,12 @@ class Layout
 	/**
 	 * Assign block in template and Replace block in layout
 	 * @param	string $name
+	 * @param	bool $append
 	 */
-	public function block($name = ''){
+	public function block($name = '', $append = false){
 		if($name != ''){
 			$this->block_name = $name;
+			$this->block_append = $append;
 			ob_start();
 		}else{
 			$block_output = ob_get_clean();
@@ -114,39 +165,64 @@ class Layout
 			if($this->block_replace){
 				// Replace overriden block in layout
 				if(!empty($this->block_list[$this->block_name])){
-					echo $this->block_list[$this->block_name];
+					echo $this->block_list[$this->block_name]['append'] 
+							? $block_output . $this->block_list[$this->block_name]['output'] 
+							: $this->block_list[$this->block_name]['output'];
 				}else{
 					echo $block_output;
 				}
 			}else{
 				// Override block in template
-				$this->block_list[$this->block_name] = $block_output;
+				$this->block_list[$this->block_name] = array(
+					'output' => $block_output,
+					'append' => (bool) $this->block_append
+				);
 			}
+			
+			$this->block_name = NULL;
+			$this->block_append = false;
 		}
-	}
-	
-	/**
-	 * Get specified block if assigned
-	 * @param	string $name
-	 */
-	public function get_block($name){
-		return (!empty($this->block_list[$name])) ? $this->block_list[$name] : '';
 	}
 	
 	/**
 	 * Set block output
 	 * @param	string $name
 	 * @param	string $output
+	 * @param	bool $append
 	 */
-	public function set_block($name, $output){
-		$this->block_list[$name] = $output;
+	public function set_block($name, $output, $append = false){
+		$this->block_list[$name] = array(
+			'output' => $output,
+			'append' => (bool) $append
+		);
+	}
+	
+	/**
+	 * Get specified block output if assigned
+	 * @param	string $name
+	 * @param	bool $raw_data
+	 */
+	public function get_block($name, $raw_data = false){
+		if(isset($this->block_list[$name])){
+			return ($raw_data) ? $this->block_list[$name] : $this->block_list[$name]['output'];
+		}else{
+			return NULL;
+		}
+	}
+	
+	/**
+	 * Set element dir
+	 * @param	string $layout_dir
+	 */
+	protected function _set_element_dir($layout_dir = NULL){
+		$this->layout_element_dir = ($layout_dir ? $layout_dir : $this->layout_dir) . $this->element_dir;
 	}
 	
 	/**
 	 * Helper function to parse HTML element attributes
 	 * @param	mixed $attributes
 	 */
-	private function _parse_attributes($attributes){
+	protected function _parse_attributes($attributes){
 		$att = '';
 		if(!empty($attributes)){
 			if(is_string($attributes)){
