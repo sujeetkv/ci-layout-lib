@@ -8,7 +8,9 @@ class Layout
 {
 	protected $CI;
 	
-	protected $layout_title = '';
+	protected $layout_title = NULL;
+	protected $app_title = NULL;
+	protected $_process_title = true;
 	
 	protected $element_dir = 'elements/';
 	protected $layout_element_dir = '';
@@ -43,6 +45,8 @@ class Layout
 	 * @param	string $layout_dir
 	 */
 	public function view($view, $data = NULL, $return = false, $layout_view = NULL, $layout_dir = NULL){
+		if($this->_process_title) $this->_normalize_title();
+		
 		// Render resources
 		$_data['title_for_layout'] = $this->layout_title;
 		
@@ -74,9 +78,9 @@ class Layout
 	 * Load or Get layout element view
 	 * @param	string $name
 	 */
-	public function element($name, $return = false, $layout_dir = NULL){
+	public function element($name, $data = NULL, $return = false, $layout_dir = NULL){
 		$element_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' . $this->element_dir : $this->layout_element_dir;
-		$element = $this->CI->load->view($element_dir . $name, array(), $return);
+		$element = $this->CI->load->view($element_dir . $name, $data, $return);
 		return $element;
 	}
 	
@@ -86,6 +90,22 @@ class Layout
 	 */
 	public function title($title){
 		$this->layout_title = $title;
+	}
+	
+	/**
+	 * Set application title
+	 * @param	string $app_title
+	 */
+	public function set_app_title($app_title){
+		$this->app_title = $app_title;
+	}
+	
+	/**
+	 * Enable or Disable processed title
+	 * @param	bool $process_title
+	 */
+	public function process_title($process_title = true){
+		$this->_process_title = (bool) $process_title;
 	}
 	
 	/**
@@ -219,6 +239,45 @@ class Layout
 	}
 	
 	/**
+	 * Helper function to set page title
+	 */
+	protected function _normalize_title(){
+		$_title = '';
+		
+		if(! is_null($this->layout_title)){
+			$_title .= $this->layout_title;
+		}else{
+			$_tmp = array();
+			
+			$_act = strtolower($this->CI->router->fetch_method());
+			$_ctr = strtolower($this->CI->router->fetch_class());
+			$_mod = method_exists($this->CI->router, 'fetch_module') /* detect modular extension */
+					? strtolower(rtrim($this->CI->router->fetch_module(), '/')) 
+					: strtolower(rtrim($this->CI->router->fetch_directory(), '/'));
+			
+			if($_act != 'index'){
+				$_tmp[] = str_replace(array('_','-'), ' ', $_act);
+			}
+			
+			if($_act == 'index' or !in_array($_ctr, array('index', 'home'))){
+				$_tmp[] = str_replace(array('_','-'), ' ', $_ctr);
+			}
+			
+			if(! empty($_mod) and !in_array($_mod, array($_act, $_ctr))){
+				$_tmp[] = str_replace(array('_','-'), ' ', $_mod);
+			}
+			
+			$_title .= ucwords(implode(' - ', $_tmp));
+		}
+		
+		if(! empty($this->app_title)){
+			$_title .= (empty($_title) ? '' : ' | ') . $this->app_title;
+		}
+		
+		$this->layout_title = $_title;
+	}
+	
+	/**
 	 * Helper function to parse HTML element attributes
 	 * @param	mixed $attributes
 	 */
@@ -228,7 +287,7 @@ class Layout
 			if(is_string($attributes)){
 				$att .= ' '.$attributes;
 			}elseif(is_array($attributes)){
-				foreach($attributes as $key => $val) $att .= ' ' . $key . '="' . $val . '"';
+				foreach($attributes as $key => $val) $att .= ' ' . $key . '="' . htmlspecialchars($val) . '"';
 			}
 		}
 		return $att;
