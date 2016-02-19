@@ -1,7 +1,7 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * CodeIgniter Layout library -by Sujeet <sujeetkv90@gmail.com>
- * v 1.1
+ * v 1.2
  */
 
 class Layout
