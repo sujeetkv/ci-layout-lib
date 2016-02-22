@@ -1,11 +1,13 @@
 <?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
 /**
  * CodeIgniter Layout library -by Sujeet <sujeetkv90@gmail.com>
- * v 1.2
+ * v 1.3
  */
 
 class Layout
 {
+	const NL = "\n";
+	
 	protected $CI;
 	
 	protected $layout_title = NULL;
@@ -18,7 +20,7 @@ class Layout
 	protected $layout_dir = '_layouts/';
 	protected $layout_view = 'default';
 	
-	protected $css_list = array(), $js_list = array();
+	protected $css_list = array(), $js_list = array(), $meta_list = array();
 	protected $css_attr = array('rel'=>'stylesheet','type'=>'text/css');
 	protected $js_attr = array('type'=>'text/javascript');
 	
@@ -50,13 +52,17 @@ class Layout
 		// Render resources
 		$_data['title_for_layout'] = $this->layout_title;
 		
+		$_data['meta_for_layout'] = '';
+		foreach($this->meta_list as $m)
+			$_data['meta_for_layout'] .= sprintf('<meta%s />' . self::NL, $m);
+		
 		$_data['css_for_layout'] = '';
-		foreach($this->css_list as $v)
-			$_data['css_for_layout'] .= sprintf('<link%s href="%s" />', $v['attributes'], $v['resource']);
+		foreach($this->css_list as $s)
+			$_data['css_for_layout'] .= sprintf('<link%s href="%s" />' . self::NL, $s['attributes'], $s['resource']);
 		
 		$_data['js_for_layout'] = '';
-		foreach($this->js_list as $v)
-			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>', $v['attributes'], $v['resource']);
+		foreach($this->js_list as $j)
+			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>' . self::NL, $j['attributes'], $j['resource']);
 		
 		// Render template
 		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
@@ -106,6 +112,20 @@ class Layout
 	 */
 	public function process_title($process_title = true){
 		$this->_process_title = (bool) $process_title;
+	}
+	
+	/**
+	 * Adds meta tag to current page
+	 * @param	string $name
+	 * @param	string $content
+	 * @param	string $type
+	 * @param	bool $overwrite
+	 */
+	public function add_meta($name, $content, $type = 'name', $overwrite = true){
+		$type = ($type !== 'name') ? 'http-equiv' : 'name';
+		$meta_attributes = $this->_parse_attributes(array($type => $name, 'content' => $content));
+		if(! $overwrite) $this->meta_list[] = $meta_attributes;
+		else $this->meta_list[strtolower($name)] = $meta_attributes;
 	}
 	
 	/**
