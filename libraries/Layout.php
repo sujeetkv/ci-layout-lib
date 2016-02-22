@@ -249,11 +249,11 @@ class Layout
 		}else{
 			$_tmp = array();
 			
-			$_act = strtolower($this->CI->router->fetch_method());
-			$_ctr = strtolower($this->CI->router->fetch_class());
-			$_mod = method_exists($this->CI->router, 'fetch_module') /* detect modular extension */
-					? strtolower(rtrim($this->CI->router->fetch_module(), '/')) 
-					: strtolower(rtrim($this->CI->router->fetch_directory(), '/'));
+			$_act = strtolower($this->CI->router->method);
+			$_ctr = strtolower($this->CI->router->class);
+			$_mod = property_exists($this->CI->router, 'module') /* detect modular extension */
+					? strtolower(rtrim($this->CI->router->module, '/')) 
+					: strtolower(rtrim($this->CI->router->directory, '/'));
 			
 			if($_act != 'index'){
 				$_tmp[] = str_replace(array('_','-'), ' ', $_act);
