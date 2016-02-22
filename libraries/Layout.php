@@ -2,6 +2,7 @@
 /**
  * CodeIgniter Layout library -by Sujeet <sujeetkv90@gmail.com>
  * v 1.3
+ * https://github.com/sujeet-kumar/ci-layout-lib
  */
 
 class Layout
