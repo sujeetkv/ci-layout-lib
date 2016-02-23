@@ -7,7 +7,7 @@
 
 class Layout
 {
-	const NL = "\n";
+	const LE = "\n";
 	
 	protected $CI;
 	
@@ -55,15 +55,15 @@ class Layout
 		
 		$_data['meta_for_layout'] = '';
 		foreach($this->meta_list as $m)
-			$_data['meta_for_layout'] .= sprintf('<meta%s />' . self::NL, $m);
+			$_data['meta_for_layout'] .= sprintf('<meta%s />' . self::LE, $m);
 		
 		$_data['css_for_layout'] = '';
 		foreach($this->css_list as $s)
-			$_data['css_for_layout'] .= sprintf('<link%s href="%s" />' . self::NL, $s['attributes'], $s['resource']);
+			$_data['css_for_layout'] .= sprintf('<link%s href="%s" />' . self::LE, $s['attributes'], $s['resource']);
 		
 		$_data['js_for_layout'] = '';
 		foreach($this->js_list as $j)
-			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>' . self::NL, $j['attributes'], $j['resource']);
+			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>' . self::LE, $j['attributes'], $j['resource']);
 		
 		// Render template
 		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
