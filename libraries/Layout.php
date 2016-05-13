@@ -25,7 +25,7 @@ class Layout
 	protected $css_attr = array('rel'=>'stylesheet','type'=>'text/css');
 	protected $js_attr = array('type'=>'text/javascript');
 	
-	protected $block_list = array(), $block_name, $block_append = false, $block_replace = false;
+	protected $block_list = array(), $block_name, $block_replace = false, $_block_override = false;
 	
 	public function __construct(){
 		$this->CI =& get_instance();
@@ -71,7 +71,7 @@ class Layout
 		$this->_set_element_dir($layout_dir); // dynamic element dir
 		
 		$_data['content_for_layout'] = $this->CI->load->view($view, $data, true);
-		$this->block_replace = true;
+		$this->_block_override = true;
 		
 		$_layout_view = $layout_dir . ($layout_view ? $layout_view : $this->layout_view);
 		$output = $this->CI->load->view($_layout_view, $_data, $return);
@@ -103,7 +103,7 @@ class Layout
 	 * Set application title
 	 * @param	string $app_title
 	 */
-	public function set_app_title($app_title){
+	public function main_title($app_title){
 		$this->app_title = $app_title;
 	}
 	
@@ -193,22 +193,22 @@ class Layout
 	/**
 	 * Assign block in template and Replace block in layout
 	 * @param	string $name
-	 * @param	bool $append
+	 * @param	bool $replace
 	 */
-	public function block($name = '', $append = false){
+	public function block($name = '', $replace = false){
 		if($name != ''){
 			$this->block_name = $name;
-			$this->block_append = $append;
+			$this->block_replace = $replace;
 			ob_start();
 		}else{
 			$block_output = ob_get_clean();
 			
-			if($this->block_replace){
+			if($this->_block_override){
 				// Replace overriden block in layout
 				if(!empty($this->block_list[$this->block_name])){
-					echo $this->block_list[$this->block_name]['append'] 
-							? $block_output . $this->block_list[$this->block_name]['output'] 
-							: $this->block_list[$this->block_name]['output'];
+					echo $this->block_list[$this->block_name]['replace'] 
+							? $this->block_list[$this->block_name]['output'] 
+							: $block_output . $this->block_list[$this->block_name]['output'];
 				}else{
 					echo $block_output;
 				}
@@ -216,12 +216,12 @@ class Layout
 				// Override block in template
 				$this->block_list[$this->block_name] = array(
 					'output' => $block_output,
-					'append' => (bool) $this->block_append
+					'replace' => (bool) $this->block_replace
 				);
 			}
 			
 			$this->block_name = NULL;
-			$this->block_append = false;
+			$this->block_replace = false;
 		}
 	}
 	
@@ -229,23 +229,23 @@ class Layout
 	 * Set block output
 	 * @param	string $name
 	 * @param	string $output
-	 * @param	bool $append
+	 * @param	bool $replace
 	 */
-	public function set_block($name, $output, $append = false){
+	public function set_block($name, $output, $replace = false){
 		$this->block_list[$name] = array(
 			'output' => $output,
-			'append' => (bool) $append
+			'replace' => (bool) $replace
 		);
 	}
 	
 	/**
 	 * Get specified block output if assigned
 	 * @param	string $name
-	 * @param	bool $raw_data
+	 * @param	bool $get_array
 	 */
-	public function get_block($name, $raw_data = false){
+	public function get_block($name, $get_array = false){
 		if(isset($this->block_list[$name])){
-			return ($raw_data) ? $this->block_list[$name] : $this->block_list[$name]['output'];
+			return ($get_array) ? $this->block_list[$name] : $this->block_list[$name]['output'];
 		}else{
 			return NULL;
 		}
