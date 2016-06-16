@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <title><?php echo $title_for_layout; ?></title>
+
+<?php echo $meta_for_layout; ?>
 
 <?php echo $css_for_layout; ?>
 

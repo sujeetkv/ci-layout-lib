@@ -1,8 +1,9 @@
-<?php  if ( ! defined('BASEPATH')) exit('No direct script access allowed');
+<?php  defined('BASEPATH') OR exit('No direct script access allowed');
 /**
- * CodeIgniter Layout library -by Sujeet <sujeetkv90@gmail.com>
- * v 1.3
- * https://github.com/sujeet-kumar/ci-layout-lib
+ * CodeIgniter Layout library
+ * v 1.4
+ * @author Sujeet <sujeetkv90@gmail.com>
+ * @link https://github.com/sujeet-kumar/ci-layout-lib
  */
 
 class Layout
@@ -12,13 +13,13 @@ class Layout
 	protected $CI;
 	
 	protected $layout_title = NULL;
-	protected $app_title = NULL;
+	protected $layout_main_title = NULL;
 	protected $_process_title = true;
 	
-	protected $element_dir = 'elements/';
-	protected $layout_element_dir = '';
+	protected $element_base = '_elements/';
 	
-	protected $layout_dir = '_layouts/';
+	protected $layout_base = '_layouts/';
+	protected $layout_dir = '';
 	protected $layout_view = 'default';
 	
 	protected $css_list = array(), $js_list = array(), $meta_list = array();
@@ -34,13 +35,11 @@ class Layout
 		if(isset($this->CI->layout_dir)) $this->layout_dir = $this->CI->layout_dir;
 		if(isset($this->CI->layout_view)) $this->layout_view = $this->CI->layout_view;
 		
-		$this->_set_element_dir();
-		
 		log_message('debug', "Layout Class Initialized");
 	}
 	
 	/**
-	 * Load or Get rendered template view
+	 * Load or Get rendered view
 	 * @param	string $title
 	 * @param	array $data
 	 * @param	bool $return
@@ -66,45 +65,42 @@ class Layout
 			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>' . self::LF, $j['attributes'], $j['resource']);
 		
 		// Render template
-		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
-		
-		$this->_set_element_dir($layout_dir); // dynamic element dir
-		
 		$_data['content_for_layout'] = $this->CI->load->view($view, $data, true);
 		$this->_block_override = true;
 		
-		$_layout_view = $layout_dir . ($layout_view ? $layout_view : $this->layout_view);
-		$output = $this->CI->load->view($_layout_view, $_data, $return);
+		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
+		$_layout_view = $this->layout_base . $layout_dir . ($layout_view ? $layout_view : $this->layout_view);
 		
-		$this->_set_element_dir(); // reset element dir
+		$output = $this->CI->load->view($_layout_view, $_data, $return);
 		
 		return $output;
 	}
 	
 	/**
-	 * Load or Get layout element view
-	 * @param	string $name
+	 * Load or Get element view
+	 * @param	string $view
+	 * @param	array $data
+	 * @param	bool $return
 	 */
-	public function element($name, $data = NULL, $return = false, $layout_dir = NULL){
-		$element_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' . $this->element_dir : $this->layout_element_dir;
-		$element = $this->CI->load->view($element_dir . $name, $data, $return);
+	public function element($view, $data = NULL, $return = false){
+		$element = $this->CI->load->view($this->element_base . $view, $data, $return);
 		return $element;
 	}
 	
 	/**
 	 * Set page title
-	 * @param	string $title
+	 * @param	string $layout_title
 	 */
-	public function title($title){
-		$this->layout_title = $title;
+	public function title($layout_title){
+		$this->layout_title = $layout_title;
 	}
 	
 	/**
-	 * Set application title
-	 * @param	string $app_title
+	 * Set main title
+	 * @param	string $layout_main_title
 	 */
-	public function main_title($app_title){
-		$this->app_title = $app_title;
+	public function main_title($layout_main_title){
+		$this->layout_main_title = $layout_main_title;
 	}
 	
 	/**
@@ -123,7 +119,6 @@ class Layout
 	 * @param	bool $overwrite
 	 */
 	public function add_meta($name, $content, $type = 'name', $overwrite = true){
-		$type = ($type !== 'name') ? 'http-equiv' : 'name';
 		$meta_attributes = $this->_parse_attributes(array($type => $name, 'content' => $content));
 		if(! $overwrite) $this->meta_list[] = $meta_attributes;
 		else $this->meta_list[strtolower($name)] = $meta_attributes;
@@ -162,8 +157,7 @@ class Layout
 	 * @param	string $layout_dir
 	 */
 	public function set_layout_dir($layout_dir){
-		if(!empty($layout_dir)) $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
-		$this->_set_element_dir(); // reset element dir
+		empty($layout_dir) or $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
 	}
 	
 	/**
@@ -179,8 +173,8 @@ class Layout
 	 * @param	string $layout_dir
 	 */
 	public function set_layout($layout_view, $layout_dir = NULL){
-		if(!empty($layout_view)) $this->layout_view = $layout_view;
-		if(!empty($layout_dir)) $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
+		empty($layout_view) or $this->layout_view = $layout_view;
+		empty($layout_dir) or $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
 	}
 	
 	/**
@@ -191,7 +185,7 @@ class Layout
 	}
 	
 	/**
-	 * Assign block in template and Replace block in layout
+	 * Assign block in view and Replace block in layout
 	 * @param	string $name
 	 * @param	bool $replace
 	 */
@@ -205,7 +199,7 @@ class Layout
 			
 			if($this->_block_override){
 				// Replace overriden block in layout
-				if(!empty($this->block_list[$this->block_name])){
+				if(! empty($this->block_list[$this->block_name])){
 					echo $this->block_list[$this->block_name]['replace'] 
 							? $this->block_list[$this->block_name]['output'] 
 							: $block_output . $this->block_list[$this->block_name]['output'];
@@ -214,12 +208,18 @@ class Layout
 				}
 			}else{
 				// Override block in template
-				$this->block_list[$this->block_name] = array(
-					'output' => $block_output,
-					'replace' => (bool) $this->block_replace
-				);
+				if(! empty($this->block_list[$this->block_name])){
+					$this->block_list[$this->block_name]['output'] = $this->block_list[$this->block_name]['replace'] 
+							? $this->block_list[$this->block_name]['output'] 
+							: $block_output . $this->block_list[$this->block_name]['output'];
+					$this->block_list[$this->block_name]['replace'] = (bool) $this->block_replace;
+				}else{
+					$this->block_list[$this->block_name] = array(
+						'output' => $block_output,
+						'replace' => (bool) $this->block_replace
+					);
+				}
 			}
-			
 			$this->block_name = NULL;
 			$this->block_replace = false;
 		}
@@ -239,7 +239,7 @@ class Layout
 	}
 	
 	/**
-	 * Get specified block output if assigned
+	 * Get block output
 	 * @param	string $name
 	 * @param	bool $get_array
 	 */
@@ -252,15 +252,7 @@ class Layout
 	}
 	
 	/**
-	 * Set element dir
-	 * @param	string $layout_dir
-	 */
-	protected function _set_element_dir($layout_dir = NULL){
-		$this->layout_element_dir = ($layout_dir ? $layout_dir : $this->layout_dir) . $this->element_dir;
-	}
-	
-	/**
-	 * Helper function to set page title
+	 * Helper function to process page title
 	 */
 	protected function _normalize_title(){
 		$_title = '';
@@ -291,8 +283,8 @@ class Layout
 			$_title .= ucwords(implode(' - ', $_tmp));
 		}
 		
-		if(! empty($this->app_title)){
-			$_title .= (empty($_title) ? '' : ' | ') . $this->app_title;
+		if(! empty($this->layout_main_title)){
+			$_title .= (empty($_title) ? '' : ' | ') . $this->layout_main_title;
 		}
 		
 		$this->layout_title = $_title;
@@ -304,7 +296,7 @@ class Layout
 	 */
 	protected function _parse_attributes($attributes){
 		$att = '';
-		if(!empty($attributes)){
+		if(! empty($attributes)){
 			if(is_string($attributes)){
 				$att .= ' '.$attributes;
 			}elseif(is_array($attributes)){
