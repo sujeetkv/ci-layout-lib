@@ -192,14 +192,14 @@ class Layout
 	public function block($name = '', $replace = false){
 		if($name != ''){
 			$this->block_name = $name;
-			$this->block_replace = $replace;
+			$this->block_replace = (bool) $replace;
 			ob_start();
 		}else{
 			$block_output = ob_get_clean();
 			
 			if($this->_block_override){
 				// Replace overriden block in layout
-				if(! empty($this->block_list[$this->block_name])){
+				if(isset($this->block_list[$this->block_name])){
 					echo $this->block_list[$this->block_name]['replace'] 
 							? $this->block_list[$this->block_name]['output'] 
 							: $block_output . $this->block_list[$this->block_name]['output'];
@@ -208,15 +208,15 @@ class Layout
 				}
 			}else{
 				// Override block in template
-				if(! empty($this->block_list[$this->block_name])){
+				if(isset($this->block_list[$this->block_name])){
 					$this->block_list[$this->block_name]['output'] = $this->block_list[$this->block_name]['replace'] 
 							? $this->block_list[$this->block_name]['output'] 
 							: $block_output . $this->block_list[$this->block_name]['output'];
-					$this->block_list[$this->block_name]['replace'] = (bool) $this->block_replace;
+					$this->block_list[$this->block_name]['replace'] = $this->block_replace;
 				}else{
 					$this->block_list[$this->block_name] = array(
 						'output' => $block_output,
-						'replace' => (bool) $this->block_replace
+						'replace' => $this->block_replace
 					);
 				}
 			}
@@ -247,7 +247,7 @@ class Layout
 		if(isset($this->block_list[$name])){
 			return ($get_array) ? $this->block_list[$name] : $this->block_list[$name]['output'];
 		}else{
-			return NULL;
+			return '';
 		}
 	}
 	
