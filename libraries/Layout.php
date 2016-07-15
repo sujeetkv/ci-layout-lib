@@ -23,17 +23,20 @@ class Layout
 	protected $layout_view = 'default';
 	
 	protected $css_list = array(), $js_list = array(), $meta_list = array();
-	protected $css_attr = array('rel'=>'stylesheet','type'=>'text/css');
-	protected $js_attr = array('type'=>'text/javascript');
+	protected $css_attrs = array('rel'=>'stylesheet','type'=>'text/css');
+	protected $js_attrs = array('type'=>'text/javascript');
 	
 	protected $block_list = array(), $block_name, $block_replace = false, $_block_override = false;
 	
+	/**
+	 * Initialize library
+	 */
 	public function __construct(){
 		$this->CI =& get_instance();
 		
-		// Grab layout from called controller
-		if(isset($this->CI->layout_dir)) $this->layout_dir = $this->CI->layout_dir;
-		if(isset($this->CI->layout_view)) $this->layout_view = $this->CI->layout_view;
+		// Grab layout dir and view when loaded in controller
+		isset($this->CI->layout_dir) and $this->layout_dir = $this->CI->layout_dir;
+		isset($this->CI->layout_view) and $this->layout_view = $this->CI->layout_view;
 		
 		log_message('debug', "Layout Class Initialized");
 	}
@@ -47,22 +50,27 @@ class Layout
 	 * @param	string $layout_dir
 	 */
 	public function view($view, $data = NULL, $return = false, $layout_view = NULL, $layout_dir = NULL){
-		if($this->_process_title) $this->_normalize_title();
+		if($this->_process_title){
+			$this->_normalize_title();
+		}
 		
 		// Render resources
 		$_data['title_for_layout'] = $this->layout_title;
 		
 		$_data['meta_for_layout'] = '';
-		foreach($this->meta_list as $m)
+		foreach($this->meta_list as $m){
 			$_data['meta_for_layout'] .= sprintf('<meta%s />' . self::LF, $m);
+		}
 		
 		$_data['css_for_layout'] = '';
-		foreach($this->css_list as $s)
+		foreach($this->css_list as $s){
 			$_data['css_for_layout'] .= sprintf('<link%s href="%s" />' . self::LF, $s['attributes'], $s['resource']);
+		}
 		
 		$_data['js_for_layout'] = '';
-		foreach($this->js_list as $j)
+		foreach($this->js_list as $j){
 			$_data['js_for_layout'] .= sprintf('<script%s src="%s"></script>' . self::LF, $j['attributes'], $j['resource']);
+		}
 		
 		// Render template
 		$_data['content_for_layout'] = $this->CI->load->view($view, $data, true);
@@ -119,9 +127,9 @@ class Layout
 	 * @param	bool $overwrite
 	 */
 	public function add_meta($name, $content, $type = 'name', $overwrite = true){
-		$meta_attributes = $this->_parse_attributes(array($type => $name, 'content' => $content));
+		$meta_attributes = $this->_stringify_attributes(array($type => $name, 'content' => $content));
 		if(! $overwrite) $this->meta_list[] = $meta_attributes;
-		else $this->meta_list[strtolower($name)] = $meta_attributes;
+		else $this->meta_list[strtolower($type . $name)] = $meta_attributes;
 	}
 	
 	/**
@@ -131,9 +139,9 @@ class Layout
 	 */
 	public function add_css($resource_url, $attributes = ''){
 		if(is_array($attributes)){
-			$attributes = $this->_parse_attributes(array_merge($this->css_attr,$attributes));
+			$attributes = $this->_stringify_attributes(array_merge($this->css_attrs, $attributes));
 		}else{
-			$attributes = $this->_parse_attributes($this->css_attr) . $this->_parse_attributes($attributes);
+			$attributes = $this->_stringify_attributes($this->css_attrs) . $this->_stringify_attributes($attributes);
 		}
 		$this->css_list[] = array('resource'=>$resource_url, 'attributes'=>$attributes);
 	}
@@ -145,9 +153,9 @@ class Layout
 	 */
 	public function add_js($resource_url, $attributes = ''){
 		if(is_array($attributes)){
-			$attributes = $this->_parse_attributes(array_merge($this->js_attr,$attributes));
+			$attributes = $this->_stringify_attributes(array_merge($this->js_attrs, $attributes));
 		}else{
-			$attributes = $this->_parse_attributes($this->js_attr) . $this->_parse_attributes($attributes);
+			$attributes = $this->_stringify_attributes($this->js_attrs) . $this->_stringify_attributes($attributes);
 		}
 		$this->js_list[] = array('resource'=>$resource_url, 'attributes'=>$attributes);
 	}
@@ -294,16 +302,16 @@ class Layout
 	 * Helper function to parse HTML element attributes
 	 * @param	mixed $attributes
 	 */
-	protected function _parse_attributes($attributes){
-		$att = '';
+	protected function _stringify_attributes($attributes){
+		$attrs = '';
 		if(! empty($attributes)){
 			if(is_string($attributes)){
-				$att .= ' '.$attributes;
+				$attrs .= ' '.$attributes;
 			}elseif(is_array($attributes)){
-				foreach($attributes as $key => $val) $att .= ' ' . $key . '="' . htmlspecialchars($val) . '"';
+				foreach($attributes as $key => $val) $attrs .= ' ' . $key . '="' . htmlspecialchars($val) . '"';
 			}
 		}
-		return $att;
+		return $attrs;
 	}
 }
 
