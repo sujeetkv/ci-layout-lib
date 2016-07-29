@@ -2,6 +2,7 @@
 /**
  * CodeIgniter Layout library
  * v 1.4
+ *
  * @author Sujeet <sujeetkv90@gmail.com>
  * @link https://github.com/sujeet-kumar/ci-layout-lib
  */
@@ -76,7 +77,7 @@ class Layout
 		$_data['content_for_layout'] = $this->CI->load->view($view, $data, true);
 		$this->_block_override = true;
 		
-		$layout_dir = $layout_dir ? rtrim($layout_dir, '/\\') . '/' : $this->layout_dir;
+		$layout_dir = ($layout_dir !== NULL) ? trim($layout_dir, '/\\') . '/' : $this->layout_dir;
 		$_layout_view = $this->layout_base . $layout_dir . ($layout_view ? $layout_view : $this->layout_view);
 		
 		$output = $this->CI->load->view($_layout_view, $_data, $return);
@@ -165,7 +166,7 @@ class Layout
 	 * @param	string $layout_dir
 	 */
 	public function set_layout_dir($layout_dir){
-		empty($layout_dir) or $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
+		empty($layout_dir) or $this->layout_dir = trim($layout_dir, '/\\') . '/';
 	}
 	
 	/**
@@ -182,7 +183,7 @@ class Layout
 	 */
 	public function set_layout($layout_view, $layout_dir = NULL){
 		empty($layout_view) or $this->layout_view = $layout_view;
-		empty($layout_dir) or $this->layout_dir = rtrim($layout_dir, '/\\') . '/';
+		empty($layout_dir) or $this->layout_dir = trim($layout_dir, '/\\') . '/';
 	}
 	
 	/**
