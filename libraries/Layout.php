@@ -23,7 +23,7 @@ class Layout
 	protected $layout_dir = '';
 	protected $layout_view = 'default';
 	
-	protected $css_list = array(), $js_list = array(), $meta_list = array();
+	protected $css_list = array(), $js_list = array(), $meta_list = array(), $link_list = array();
 	protected $css_attrs = array('rel'=>'stylesheet','type'=>'text/css');
 	protected $js_attrs = array('type'=>'text/javascript');
 	
@@ -61,6 +61,11 @@ class Layout
 		$_data['meta_for_layout'] = '';
 		foreach($this->meta_list as $m){
 			$_data['meta_for_layout'] .= sprintf('<meta%s />' . self::LF, $m);
+		}
+		
+		$_data['link_for_layout'] = '';
+		foreach($this->link_list as $l){
+			$_data['link_for_layout'] .= sprintf('<link%s />' . self::LF, $l);
 		}
 		
 		$_data['css_for_layout'] = '';
@@ -125,12 +130,37 @@ class Layout
 	 * @param	string $name
 	 * @param	string $content
 	 * @param	string $type
+	 * @param	mixed $attributes
 	 * @param	bool $overwrite
 	 */
-	public function add_meta($name, $content, $type = 'name', $overwrite = true){
-		$meta_attributes = $this->_stringify_attributes(array($type => $name, 'content' => $content));
-		if(! $overwrite) $this->meta_list[] = $meta_attributes;
-		else $this->meta_list[strtolower($type . $name)] = $meta_attributes;
+	public function add_meta($name, $content, $type = 'name', $attributes = '', $overwrite = true){
+		$meta_attrs = array($type => $name, 'content' => $content);
+		
+		$meta_attributes = is_array($attributes) 
+			? $this->_stringify_attributes(array_merge($meta_attrs, $attributes)) 
+			: $this->_stringify_attributes($meta_attrs) . $this->_stringify_attributes($attributes);
+		
+		if(! $overwrite){
+			$this->meta_list[] = $meta_attributes;
+		}else{
+			$this->meta_list[strtolower($type . $name)] = $meta_attributes;
+		}
+	}
+	
+	/**
+	 * Adds link tag to current page
+	 * @param	string $rel
+	 * @param	string $href
+	 * @param	mixed $attributes
+	 */
+	public function add_link($rel, $href, $attributes = ''){
+		$link_attrs = array('rel' => $rel, 'href' => $href);
+		
+		$link_attributes = is_array($attributes) 
+			? $this->_stringify_attributes(array_merge($link_attrs, $attributes)) 
+			: $this->_stringify_attributes($link_attrs) . $this->_stringify_attributes($attributes);
+		
+		$this->link_list[] = $link_attributes;
 	}
 	
 	/**
