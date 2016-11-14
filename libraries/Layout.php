@@ -345,5 +345,3 @@ class Layout
     }
     
 }
-
-/* End of file Layout.php */
