@@ -32,12 +32,12 @@ class Layout
      * Initialize library
      */
     public function __construct() {
-        $this->CI = & get_instance();
-
+        $this->CI = &get_instance();
+        
         // Grab layout dir and view when loaded in controller
         isset($this->CI->layout_dir) and $this->layout_dir = $this->CI->layout_dir;
         isset($this->CI->layout_view) and $this->layout_view = $this->CI->layout_view;
-
+        
         log_message('debug', "Layout Class Initialized");
     }
     
