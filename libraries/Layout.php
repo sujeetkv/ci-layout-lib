@@ -6,7 +6,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * v 1.4
  *
  * @author Sujeet <sujeetkv90@gmail.com>
- * @link https://github.com/sujeet-kumar/ci-layout-lib
+ * @link https://github.com/sujeetkv/ci-layout-lib
  */
 class Layout
 {
